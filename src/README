@@ -1,0 +1,20 @@
+    Am implementat tema complet in C. Am folosit structuri pentru chunk-uri, informatiile fisierelor, informatiile peers-urilor si pentru
+mentinerea fisierelor swarm si a datelor sale.
+    Am inceput prin parsarea fisierelor in functie de rankul peer-ului in care ma aflu. Dupa ce am parsat fisierul, il trimit la tracker
+pentru a putea inregistra swarmul aferent, iar trackerul trimite un ack inapoi semn ca toate procesele au terminat de parsat fisierele
+si pot incepe download-ul si upload-ul. In functia de download am scanat numarul de fisiere dorite si numele lor si le-am trimis catre tracker
+pentru a putea primi de la acesta swarmurile aferente fisierelor cerute. Pentru eficienta descarcarii am ales ca la fiecare chunk sa
+se aleaga un peer random si se trimite catre acesta hashul cerut, iar seed-ul raspunde cu un ack ca semn ca se poate continua descarcarea.
+La fiecare 10 segmente, trimit chunk-urile primite de peers catre tracker pentru a le adauga in swarmurile fisierelor si pentru a anunta ceilalti peers
+ca acesta detine segmente si se poate descarca de la acesta. Am facut acest lucru prin trimiterea fisierelor dorite la tracker la fiecare
+10 segmente si primirea swarm-urilor dorite tot in acest interval, astfel la fiecare 10 segmente toti peers vor avea swarmurile actualizate.
+Cand aveam un numar care nu este multiplu de 10, trimiteam la finalul descarcarii fisierului si celelalte segmente ramase. La fiecare fisier
+terminat de descarcat, se va scrie in fisierul denumit conform cerintei, iar la finalul descarcarii tuturor fisierelor se va trimite un ack catre
+tracker. Pentru evitarea problemelor aparute de mai folosirea mai multor senduri si receivuri in aceleasi bucle am folosit MPI tags.
+    In functia de upload, primesc chunk-uri de la orice sursa si trimit ack-uri dupa primirea hashurilor. Pentru a putea opri thread-ul de upload
+trimit un chunk gol de la tracker si practic cand sursa este trackerul, threadul se opreste.
+    In tracker, tin evidenta numarului de fisere total dorite de peers pentru a putea stii cand sa opresc ascultarea trackerului, astfel:
+trackerul asculta si primeste segmentele noi de la orice peers conform procesului descris mai sus si actualizeaza lista de swarmuri, 
+le trimite si marcheaza noii seederi. Cand am primit numarul total de chunk uri de la un fisier, "scad" numarul de fisiere dorite, iar cand ating
+numarul maxim, opresc ascultarea. La final, trackerul asteapta semnalul de oprire de la fiecare peers si trimite chunk trash pentru a opri toate seed-urile
+si threadurile.
